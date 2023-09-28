@@ -1,8 +1,14 @@
+"""
+This script takes a list of English NHS trusts from the NHS website & returns a list of URLs to the trusts' own websites.
+
+Note that some may be missing due to incomplete data on the NHS website; check output against the warning logs to find omitted trusts.
+"""
+
 import requests
 from bs4 import BeautifulSoup
 import re, csv, logging
 
-logging.getLogger().setLevel(logging.INFO)
+logging.getLogger().setLevel(logging.WARNING)
 
 LIST_URL = "https://www.england.nhs.uk/publication/nhs-provider-directory/"
 
