@@ -16,12 +16,21 @@ LIST_URL = "https://www.england.nhs.uk/publication/nhs-provider-directory/"
 FILE_NAME = "urls.csv"
 
 MANUAL_URLS = {
-    "Gloucestershire Health and Care NHS Foundation Trust": "https://www.ghc.nhs.uk/", # Incorrect URL
-    "University Hospitals Dorset NHS Foundation Trust": "https://www.uhd.nhs.uk/" # URL missing
+    "Gloucestershire Health and Care NHS Foundation Trust": "https://www.ghc.nhs.uk/", # Incorrect domain
+    "University Hospitals Dorset NHS Foundation Trust": "https://www.uhd.nhs.uk/", # URL missing
+    "North West Anglia NHS Foundation Trust": "https://www.nwangliaft.nhs.uk/", # Incorrect domain
+    "Bolton NHS Foundation Trust": "https://www.boltonft.nhs.uk/", # HTTPS missing
+    "Cumbria, Northumberland, Tyne and Wear NHS Foundation Trust": "https://www.cntw.nhs.uk/", # Incorrect domain
+    "Greater Manchester Mental Health NHS Foundation Trust": "https://www.gmmh.nhs.uk/", # Incorrect domain
+    "Lancashire and South Cumbria NHS Foundation Trust": "https://www.lscft.nhs.uk/", # Incorrect domain
+    "Milton Keynes University Hospital NHS Foundation Trust": "https://www.mkuh.nhs.uk/", # Incorrect domain
+    "North West Anglia NHS Foundation Trust": "https://www.nwangliaft.nhs.uk/", # Incorrect domain (DNS missing)
+    "Wrightington, Wigan and Leigh NHS Foundation Trust": "https://www.wwl.nhs.uk/", # Incorrect domain
+    "Black Country Healthcare NHS Foundation Trust": "https://www.blackcountryhealthcare.nhs.uk/", # New trust
 }
 
 MANUAL_EXCLUDE = [
-    
+    "Yeovil District Hospital NHS Foundation Trust", # Absorbed into "Somerset NHS Foundation Trust (formerly Somerset Partnership NHS Foundation Trust)""
 ]
 
 def scrape_list_site(url):
@@ -33,11 +42,14 @@ def scrape_list_site(url):
 
     failed = {}
 
-    with open(FILE_NAME, "w", encoding="utf-8") as f:
+    with open(FILE_NAME, "w", encoding="utf-8", newline='') as f:
         writer = csv.DictWriter(f, ["Trust", "URL"])
 
-        for name, index_url in {tag.text: tag.get("href") for tag in hrefs}.items():
-            logging.info(f"Fetching {name} from {index_url}")
+        trust_hrefs = {tag.text: tag.get("href") for tag in hrefs}
+        trust_hrefs.pop("Register of licensed healthcare providers") # remove end element
+
+        for name, index_url in trust_hrefs.items():
+            logging.debug(f"Fetching {name} from {index_url}")
             content = BeautifulSoup(requests.get(index_url).content, features="lxml")
 
             websiteLabel = content.find(re.compile("^h[1-6]$"), string="Website")
@@ -54,7 +66,7 @@ def scrape_list_site(url):
 
 def cleanup():
     logging.info("Cleaning up trusts URLs")
-    with open(FILE_NAME, "r", encoding="utf-8") as f:
+    with open(FILE_NAME, "r", encoding="utf-8", newline='') as f:
         reader = csv.DictReader(f, ["Trust", "URL"])
         trusts = {row["Trust"]:row["URL"] for row in reader}
     
@@ -66,9 +78,16 @@ def cleanup():
             logging.warning(f"Wrong URL for {k} ({trusts.get(k)}), replacing with {v}")
             trusts.update({k:v})
         else:
-            logging.info(f"Trust {k} has correct url {v}; consider removing from MANUAL_URLS")
+            logging.info(f"Trust {k} has correct url {v}; consider removal from MANUAL_URLS")
+
+    for exclusion in MANUAL_EXCLUDE:
+        if exclusion in trusts:
+            url = trusts.pop(exclusion)
+            logging.warning(f"Popped {exclusion} w/ url {url}")
+        else:
+            logging.info(f"Trust {exclusion} in MANUAL_EXCLUDES does not exist, consider removal")
     
-    with open(FILE_NAME, "w", encoding="utf-8") as f:
+    with open(FILE_NAME, "w", encoding="utf-8", newline='') as f:
         writer = csv.DictWriter(f, ["Trust", "URL"])
         writer.writerows([{"Trust": k, "URL": v} for k, v in trusts.items()])
     logging.info("Trust URLs cleaned")
