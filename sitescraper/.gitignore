@@ -1,3 +1,4 @@
 urls.csv
 trusts*.json
 crawl.log
+connection_fails

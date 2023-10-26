@@ -5,14 +5,21 @@
 
 from scrapy import signals, spidermiddlewares
 from scrapy.spidermiddlewares.httperror import HttpError
+from scrapy.exceptions import IgnoreRequest
 from scrapy.http import Request, Response
-from twisted.internet.error import DNSLookupError
+from twisted.internet.error import DNSLookupError, ConnectionRefusedError
 
 # useful for handling different item types with a single interface
 from itemadapter import is_item, ItemAdapter
 from urllib.parse import urlparse
 
 import logging
+
+connect_error_log = logging.getLogger("dns_log")
+connect_error_log.addHandler(logging.FileHandler("connection_fails", "w"))
+
+def is_ok(status: int) -> bool:
+    return status >= 200 and status < 300
 
 class SitescraperSpiderMiddleware:
     # Not all methods need to be defined. If a method is not defined,
@@ -88,6 +95,11 @@ class SitescraperDownloaderMiddleware:
         # Called for each request that goes through the downloader
         # middleware.
 
+        url = urlparse(request.url)
+
+        if spider.urls.get(url.netloc, 0) <= 0:
+            raise IgnoreRequest(f"Reached limit on {url.netloc}")
+
         # Must either:
         # - return None: continue processing this request
         # - or return a Response object
@@ -98,6 +110,19 @@ class SitescraperDownloaderMiddleware:
 
     def process_response(self, request, response: Response, spider):
         # Called with the response returned from the downloader.
+
+        url = urlparse(request.url)
+
+        if url.netloc not in spider.urls:
+            logging.warning(f"URL not in urls! {url.netloc}")
+
+        if spider.urls.get(url.netloc) <= 0:
+            raise IgnoreRequest(f"Reached limit on {url.netloc} (Post-fetch)")
+        
+        if is_ok(response.status):
+            logging.debug(f"Response received: {url.netloc} {spider.urls[url.netloc]}")
+            if url.netloc in spider.urls:
+                spider.urls[url.netloc] -= 1
 
         # Must either;
         # - return a Response object
@@ -113,11 +138,21 @@ class SitescraperDownloaderMiddleware:
         # - return None: continue processing this exception
         # - return a Response object: stops process_exception() chain
         # - return a Request object: stops process_exception() chain
-        logging.error(f"Download failed: {type(exception)} {exception}")
-
+        if type(exception) is IgnoreRequest:
+            return None # Don't report that we ignored a request
+        
         if type(exception) is DNSLookupError:
             url = urlparse(request.url)
             logging.error(f"DNS lookup failed on {url.netloc}")
+            connect_error_log.error(url.netloc)
+            return None
+        elif type(exception) is ConnectionRefusedError:
+            url = urlparse(request.url)
+            logging.error(f"Could not connect to {url.netloc}")
+            connect_error_log.error(url.netloc)
+            return None
+
+        logging.error(f"Download failed: {type(exception)} {exception}")
 
         return None
 

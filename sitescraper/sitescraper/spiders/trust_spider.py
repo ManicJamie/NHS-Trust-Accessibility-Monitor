@@ -52,14 +52,6 @@ class TrustSpider(CrawlSpider):
         url = urlparse(response.request.url)
         links: list[Link] = LinkExtractor(allow_domains=self.urls.keys()).extract_links(response)
 
-        if url.netloc not in self.urls and url.netloc.split(".", maxsplit=1)[1] not in self.urls:
-            logging.warn(f"{url.netloc} not in urls!")
-            yield {
-                "domain": str(url.netloc),
-                "path": str(url.path),
-                "error": "Not in urls!"
-            } 
-
         yield {
             "domain": str(url.netloc),
             "path": str(url.path),
@@ -71,10 +63,5 @@ class TrustSpider(CrawlSpider):
         else:
 
             for l in links:
-                if self.urls[url.netloc] > 0:
-                    yield Request(url=l.url, callback=self.parse)
-                    self.urls[url.netloc] -= 1
-                else:
-                    logging.info(f"Reached domain limit for {url.netloc}, halting crawl")
-                    break
+                yield Request(url=l.url, callback=self.parse)
     

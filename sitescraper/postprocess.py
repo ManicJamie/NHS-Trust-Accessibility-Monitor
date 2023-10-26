@@ -1,7 +1,9 @@
-import json
+import json, logging
 
 with open("trusts.json") as trusts:
     raw = json.load(trusts)
+
+SITE_LIMIT = 10
 
 out = {}
 errored = []
@@ -18,6 +20,10 @@ for raw_item in raw:
             out[raw_item["domain"]] = item
         else:
             out_item.update(item)
+
+for k, v in out.items():
+    if len(v) < SITE_LIMIT:
+        logging.warning(f"Missing domains on url {k} (expected {SITE_LIMIT}, got {len(v)})")
 
 with open("trusts_consolidated.json", "w") as outFile:
     json.dump(out, outFile, indent=4)

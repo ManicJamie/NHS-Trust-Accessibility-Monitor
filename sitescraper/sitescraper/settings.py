@@ -13,6 +13,9 @@ SPIDER_MODULES = ["sitescraper.spiders"]
 SPIDER_MIDDLEWARES = {
     "sitescraper.middlewares.SitescraperSpiderMiddleware": 1000,
 }
+DOWNLOADER_MIDDLEWARES = {
+    "sitescraper.middlewares.SitescraperDownloaderMiddleware": 1000,
+}
 
 # Set to breadth first search for decent coverage
 DEPTH_PRIORITY = 1
