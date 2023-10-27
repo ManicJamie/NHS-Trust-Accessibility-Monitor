@@ -18,13 +18,12 @@ FILE_NAME = "urls.csv"
 MANUAL_URLS = {
     "Gloucestershire Health and Care NHS Foundation Trust": "https://www.ghc.nhs.uk/", # Incorrect domain
     "University Hospitals Dorset NHS Foundation Trust": "https://www.uhd.nhs.uk/", # URL missing
-    "North West Anglia NHS Foundation Trust": "https://www.nwangliaft.nhs.uk/", # Incorrect domain
+    "North West Anglia NHS Foundation Trust": "https://www.nwangliaft.nhs.uk/", # Incorrect domain (DNS missing)
     "Bolton NHS Foundation Trust": "https://www.boltonft.nhs.uk/", # HTTPS missing
     "Cumbria, Northumberland, Tyne and Wear NHS Foundation Trust": "https://www.cntw.nhs.uk/", # Incorrect domain
     "Greater Manchester Mental Health NHS Foundation Trust": "https://www.gmmh.nhs.uk/", # Incorrect domain
     "Lancashire and South Cumbria NHS Foundation Trust": "https://www.lscft.nhs.uk/", # Incorrect domain
     "Milton Keynes University Hospital NHS Foundation Trust": "https://www.mkuh.nhs.uk/", # Incorrect domain
-    "North West Anglia NHS Foundation Trust": "https://www.nwangliaft.nhs.uk/", # Incorrect domain (DNS missing)
     "Wrightington, Wigan and Leigh NHS Foundation Trust": "https://www.wwl.nhs.uk/", # Incorrect domain
     "Black Country Healthcare NHS Foundation Trust": "https://www.blackcountryhealthcare.nhs.uk/", # New trust
 }
